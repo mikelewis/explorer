@@ -14,14 +14,6 @@ import akka.actor.ActorSystem
 import akka.actor.Actor
 import akka.routing.DefaultResizer
 
-
-class PrintlnActor extends Actor {
-  def receive = {
-    case msg =>
-      println("Received message '%s' in actor %s".format(msg, self.path.name))
-  }
-}
-
 object TestRouter extends App {
   val system = ActorSystem("MySystem")
   val router = system.actorOf(Props[PrintlnActor].withRouter(ConsistentHashRouter(nrOfInstances = 1, resizer = Some(new MyCustomResizer))), "router")
