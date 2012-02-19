@@ -10,16 +10,11 @@ import akka.routing.Destination
 import scala.collection.JavaConversions.iterableAsScalaIterable
 import akka.routing.Route
 
-
-
-object ConsistentHashRouter {
-  def apply(routees: Iterable[ActorRef]) = new ConsistentHashRouter(routees = routees map (_.path.toString))
-
-}
-
-case class ConsistentHashRouter(nrOfInstances: Int = 0, routees: Iterable[String] = Nil, override val resizer: Option[Resizer] = None,
+abstract case class ConsistentHashRouter(nrOfInstances: Int = 0, routees: Iterable[String] = Nil, override val resizer: Option[Resizer] = None,
   val routerDispatcher: String = Dispatchers.DefaultDispatcherId)
   extends RouterConfig {
+
+  type HashKeyType
 
   val consistentHash = new ConsistentHash[String](routees.toIndexedSeq, 100)
 
@@ -29,10 +24,14 @@ case class ConsistentHashRouter(nrOfInstances: Int = 0, routees: Iterable[String
 
   def this(resizer: Resizer) = this(resizer = Some(resizer))
 
+  def hashKeyFromMessage(message: Any): HashKeyType
+
+  def hashKeyToByteArray(key: HashKeyType): Array[Byte]
+
   def createRoute(props: Props, routeeProvider: RouteeProvider): Route = {
     routeeProvider.createAndRegisterRoutees(props, nrOfInstances, routees)
 
-    def getActorFromRing(key: String) = {
+    def getActorFromRing(key: HashKeyType) = {
       resizer.foreach { resizer =>
         resizer match {
           case r: MyCustomResizer => {
@@ -51,13 +50,14 @@ case class ConsistentHashRouter(nrOfInstances: Int = 0, routees: Iterable[String
       }
 
       val _routees = routeeProvider.routees
-      routeeProvider.context.actorFor(consistentHash.nodeFor(key.toCharArray().map(_.toByte)))
+      routeeProvider.context.actorFor(consistentHash.nodeFor(hashKeyToByteArray(key)))
     }
 
     {
       case (sender, message) =>
+        val actorFromRing = getActorFromRing(hashKeyFromMessage(message))
         message match {
-          case FetchUrl(host, _) => List(Destination(sender, getActorFromRing(host)))
+          case FetchUrl(host, _) => List(Destination(sender, actorFromRing))
         }
     }
   }
