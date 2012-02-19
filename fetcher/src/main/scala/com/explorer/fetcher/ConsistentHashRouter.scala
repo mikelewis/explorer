@@ -10,11 +10,9 @@ import akka.routing.Destination
 import scala.collection.JavaConversions.iterableAsScalaIterable
 import akka.routing.Route
 
-abstract case class ConsistentHashRouter(nrOfInstances: Int = 0, routees: Iterable[String] = Nil, override val resizer: Option[Resizer] = None,
+abstract case class ConsistentHashRouter[HashKeyType](nrOfInstances: Int = 0, routees: Iterable[String] = Nil, override val resizer: Option[Resizer] = None,
   val routerDispatcher: String = Dispatchers.DefaultDispatcherId)
   extends RouterConfig {
-
-  type HashKeyType
 
   val consistentHash = new ConsistentHash[String](routees.toIndexedSeq, 100)
 
