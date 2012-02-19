@@ -9,6 +9,7 @@ import akka.actor.Props
 import akka.routing.Destination
 import scala.collection.JavaConversions.iterableAsScalaIterable
 import akka.routing.Route
+import akka.routing.Broadcast
 
 abstract case class ConsistentHashRouter[HashKeyType](nrOfInstances: Int = 0, routees: Iterable[String] = Nil, override val resizer: Option[Resizer] = None,
   val routerDispatcher: String = Dispatchers.DefaultDispatcherId)
@@ -47,15 +48,14 @@ abstract case class ConsistentHashRouter[HashKeyType](nrOfInstances: Int = 0, ro
         }
       }
 
-      val _routees = routeeProvider.routees
       routeeProvider.context.actorFor(consistentHash.nodeFor(hashKeyToByteArray(key)))
     }
 
     {
       case (sender, message) =>
-        val actorFromRing = getActorFromRing(hashKeyFromMessage(message))
         message match {
-          case FetchUrl(host, _) => List(Destination(sender, actorFromRing))
+          case Broadcast(msg) => toAll(sender, routeeProvider.routees)
+          case anythingelse => List(Destination(sender, getActorFromRing(hashKeyFromMessage(anythingelse))))
         }
     }
   }
