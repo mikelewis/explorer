@@ -4,10 +4,10 @@ import akka.actor.Props
 import akka.actor.ActorSystem
 import akka.routing.Broadcast
 
-class FetcherLoadBalancer(system: ActorSystem) extends Actor {
+class FetcherLoadBalancer(system: ActorSystem, fetchConfig: FetchConfig) extends Actor {
 
-  val fetchers = Vector.fill(5)(context.actorOf(Props(new Fetcher(self, system))))
-  val router = context.actorOf(Props(new Fetcher(self, system)).withRouter(
+  val fetchers = Vector.fill(5)(context.actorOf(Props(new Fetcher(self, system, fetchConfig))))
+  val router = context.actorOf(Props(new Fetcher(self, system, fetchConfig)).withRouter(
     new FetcherRouter(routees = fetchers.map(_.path.toString()), resizer = Some(new MyCustomResizer))))
 
   def receive = {

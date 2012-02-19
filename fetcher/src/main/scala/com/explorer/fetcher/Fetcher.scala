@@ -7,6 +7,7 @@ import akka.routing.RoundRobinRouter
 import akka.actor.ActorSystem
 import akka.util.duration._
 import akka.actor.ActorRef
+import com.ning.http.client.AsyncHttpClient
 
 case class CurrentlyProcessingItem(host: Option[String], url: Option[String])
 
@@ -17,7 +18,8 @@ case class CurrentlyProcessingItem(host: Option[String], url: Option[String])
  * 
  * Need system to schedule tasks
  */
-class Fetcher(parent: ActorRef, system: ActorSystem) extends Actor {
+class Fetcher(parent: ActorRef, system: ActorSystem, fetchConfig: FetchConfig) extends Actor
+  with akka.actor.ActorLogging {
   /*
    * google.com =>
    *    google.com/1
@@ -33,12 +35,36 @@ class Fetcher(parent: ActorRef, system: ActorSystem) extends Actor {
    * ..
    */
   var currentlyProcessing: HashMap[String, CurrentlyProcessingItem] = HashMap.empty[String, CurrentlyProcessingItem]
-  val urlWorkers = Vector.fill(5)(context.actorOf(Props[PrintlnActor]))
-  val router = context.actorOf(Props[PrintlnActor].withRouter(RoundRobinRouter(urlWorkers)))
+
+  val httpClient = new AsyncHttpClient(fetchConfig.httpClientConfig)
+
+  val urlWorkers = Vector.fill(5)(context.actorOf(Props(new UrlWorker(httpClient, fetchConfig))))
+  val router = context.actorOf(Props(new UrlWorker(httpClient, fetchConfig)).withRouter(RoundRobinRouter(urlWorkers)))
+
+  override def postStop() {
+    httpClient.close
+  }
 
   def receive = {
     case FetchUrl(host, url) => handleFetchUrl(host, url)
-    case DoneUrlWorker(host, url) => handleDoneUrlWorker(host, url)
+    case completedFetch: CompletedFetch => handleCompletedFetch(completedFetch)
+  }
+
+  def handleCompletedFetch(completedFetch: CompletedFetch) {
+    completedFetch match {
+      case success: SucessfulFetch => handleSuccessFetch(success)
+      case failure: FailedFetch => handleFailedFetch(failure)
+    }
+
+    handleDoneUrlWorker(completedFetch.host, completedFetch.url)
+  }
+
+  def handleSuccessFetch(success: SucessfulFetch) {
+    log.info("Success! Fetch body " + success.body)
+  }
+
+  def handleFailedFetch(failed: FailedFetch) {
+
   }
 
   // If we are currently processing a url for that host, queue it up for later fetching.
