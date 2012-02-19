@@ -8,12 +8,7 @@ import akka.actor.ActorSystem
 import akka.util.duration._
 import akka.actor.ActorRef
 
-
-case class CurrentlyProcessingItem(host: Option[String], url: Option[String]) {
-  def isEmpty = {
-    host.isEmpty
-  }
-}
+case class CurrentlyProcessingItem(host: Option[String], url: Option[String])
 
 /*
  * This Actor is responsible for a set number of hosts. No other fetcher will process the same host
@@ -23,7 +18,20 @@ case class CurrentlyProcessingItem(host: Option[String], url: Option[String]) {
  * Need system to schedule tasks
  */
 class Fetcher(parent: ActorRef, system: ActorSystem) extends Actor {
+  /*
+   * google.com =>
+   *    google.com/1
+   *    google.com/2
+   * yahoo.com =>
+   * 	yahoo.com/a
+   * 	yahoo.com/b
+   */
   val hostQueues: HashMap[String, Queue[String]] = HashMap.empty[String, Queue[String]]
+  /*
+   * google =>
+   * 	CurrentlyProcessingItem(google, google.com/1)
+   * ..
+   */
   var currentlyProcessing: HashMap[String, CurrentlyProcessingItem] = HashMap.empty[String, CurrentlyProcessingItem]
   val urlWorkers = Vector.fill(5)(context.actorOf(Props[PrintlnActor]))
   val router = context.actorOf(Props[PrintlnActor].withRouter(RoundRobinRouter(urlWorkers)))
@@ -40,7 +48,7 @@ class Fetcher(parent: ActorRef, system: ActorSystem) extends Actor {
       enqueueUrl(host, url)
     } else {
       setCurrentlyProcessing(host, url)
-      router ! FetchUrl(host, url)
+      processUrl(host, url)
     }
   }
 
@@ -53,25 +61,34 @@ class Fetcher(parent: ActorRef, system: ActorSystem) extends Actor {
     }
   }
 
-  def setCurrentlyProcessing(host: String, url: String) {
-    currentlyProcessing(host) = CurrentlyProcessingItem(Some(host), Some(url))
-  }
-
   def handleDoneUrlWorker(host: String, url: String) {
     currentlyProcessing.remove(host)
     parent ! DoneFetchUrl(host, url)
+
     if (hostQueues.contains(host)) {
       if (hostQueues(host).isEmpty) {
         hostQueues.remove(host)
       } else {
         // schedule process of popped url for 3 seconds
         val dequeuedUrl = hostQueues(host).dequeue
-
-        system.scheduler.scheduleOnce(3 seconds) {
-          router ! FetchUrl(host, dequeuedUrl)
-        }
+        processUrlLater(host, dequeuedUrl)
       }
     }
   }
 
+  def processUrlLater(host: String, url: String) {
+    system.scheduler.scheduleOnce(3 seconds) {
+      processUrl(host, url)
+    }
+  }
+
+  def processUrl(host: String, url: String) {
+    println("Processing host: " + host + " url " + url + " on Fetcher: " + self.path.name)
+    router ! FetchUrl(host, url)
+
+  }
+
+  def setCurrentlyProcessing(host: String, url: String) {
+    currentlyProcessing(host) = CurrentlyProcessingItem(Some(host), Some(url))
+  }
 }

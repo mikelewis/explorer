@@ -7,7 +7,8 @@ import akka.routing.Broadcast
 class FetcherLoadBalancer(system: ActorSystem) extends Actor {
 
   val fetchers = Vector.fill(5)(context.actorOf(Props(new Fetcher(self, system))))
-  val router = context.actorOf(Props(new Fetcher(self, system)).withRouter(new FetcherRouter(routees = fetchers.map(_.path.toString()), resizer = Some(new MyCustomResizer))))
+  val router = context.actorOf(Props(new Fetcher(self, system)).withRouter(
+    new FetcherRouter(routees = fetchers.map(_.path.toString()), resizer = Some(new MyCustomResizer))))
 
   def receive = {
     case FetchUrl(host, url) => router ! FetchUrl(host, url) // This is for debugging as we would hook this up to a queue (RabbitMQ for example).
