@@ -31,7 +31,7 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
     promise.onSuccess { 
       case response: Response => sender ! responseToCompletedFetch(host, response)
     } onFailure {
-      case ex => sender ! processExceptionFromResponse(ex)
+      case ex => sender ! FailedFetch(host, url, processExceptionFromResponse(ex))
     }
     
     client.prepareGet(url).execute(generateHttpHandler(promise))

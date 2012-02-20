@@ -60,7 +60,7 @@ class Fetcher(parent: ActorRef, system: ActorSystem, fetchConfig: FetchConfig) e
   }
 
   def handleSuccessFetch(success: SucessfulFetch) {
-    log.info("Success! Fetch body " + success.body)
+    log.info("Success! Fetch Header " + success.headers)
   }
 
   def handleFailedFetch(failed: FailedFetch) {
