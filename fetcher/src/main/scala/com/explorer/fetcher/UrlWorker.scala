@@ -44,6 +44,7 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
         e.getCause() match {
           case ce: java.net.ConnectException => ConnectionError(ce)
           case mu: java.net.MalformedURLException => MalformedUrl(mu)
+          case ura: java.nio.channels.UnresolvedAddressException => UnresolvedAddress(ura)
           case somethingElse => throw somethingElse
         }
     }

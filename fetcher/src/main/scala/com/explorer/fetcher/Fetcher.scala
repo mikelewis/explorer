@@ -64,7 +64,7 @@ class Fetcher(parent: ActorRef, system: ActorSystem, fetchConfig: FetchConfig) e
   }
 
   def handleFailedFetch(failed: FailedFetch) {
-
+    log.info("Got a failed fetch " + failed)
   }
 
   // If we are currently processing a url for that host, queue it up for later fetching.
