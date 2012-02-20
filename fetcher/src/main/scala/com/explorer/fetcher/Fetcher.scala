@@ -38,8 +38,8 @@ class Fetcher(parent: ActorRef, system: ActorSystem, fetchConfig: FetchConfig) e
 
   val httpClient = new AsyncHttpClient(fetchConfig.httpClientConfig)
 
-  val urlWorkers = Vector.fill(5)(context.actorOf(Props(new UrlWorker(httpClient, fetchConfig))))
-  val router = context.actorOf(Props(new UrlWorker(httpClient, fetchConfig)).withRouter(RoundRobinRouter(urlWorkers)))
+  val urlWorkers = Vector.fill(5)(context.actorOf(Props(new UrlWorker(system, httpClient, fetchConfig))))
+  val router = context.actorOf(Props(new UrlWorker(system, httpClient, fetchConfig)).withRouter(RoundRobinRouter(urlWorkers)))
 
   override def postStop() {
     httpClient.close

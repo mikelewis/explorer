@@ -12,32 +12,41 @@ import java.net.ConnectException
 import akka.actor.Actor
 import collection.JavaConversions._
 import akka.actor.ActorRef
+import akka.dispatch.DefaultPromise
+import akka.actor.ActorSystem
 
-class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
+class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
   with akka.actor.ActorLogging {
+  implicit def dispatcher = system.dispatcher
+
   val hooks = fetchConfig.hooks
 
   def receive = {
-    case FetchUrl(host, url) => fetchUrl(sender, host, url)
+    case FetchUrl(host, url) =>
+      processUrl(sender, host, url)
   }
 
-  def fetchUrl(sender: ActorRef, host: String, url: String) {
-    client.prepareGet(url).execute(generateHttpHandler(sender, host))
+  def processUrl(sender: ActorRef, host: String, url: String) {
+    val promise = new DefaultPromise[Response]
+    promise.onSuccess { 
+      case response: Response => sender ! responseToCompletedFetch(host, response)
+    } onFailure {
+      case ex => sender ! processExceptionFromResponse(ex)
+    }
+    
+    client.prepareGet(url).execute(generateHttpHandler(promise))
+    promise
   }
 
-  def processCompletedResponse(sender: ActorRef, host: String, response: Response) {
-    sender ! responseToCompletedFetch(host, response)
-  }
-
-  def processExceptionFromResponse(e: Throwable) = {
-    /* e match { 
-  case x => {
-        x.getCause() match {
-          case ce: java.net.ConnectException => FailedFetch(host, url, ConnectionError(ce))
-          case mu: java.net.MalformedURLException => FailedFetch(host, url, MalformedUrl(mu))
+  def processExceptionFromResponse(e: Throwable): FailedReason = {
+    e match {
+      case e =>
+        e.getCause() match {
+          case ce: java.net.ConnectException => ConnectionError(ce)
+          case mu: java.net.MalformedURLException => MalformedUrl(mu)
           case somethingElse => throw somethingElse
         }
-  }*/
+    }
   }
 
   def responseToCompletedFetch(host: String, response: Response): CompletedFetch = {
@@ -49,7 +58,7 @@ class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
     SucessfulFetch(host, url, response.getStatusCode, getHeadersFromResponse(response), response.getResponseBody)
   }
 
-  def generateHttpHandler(sender: ActorRef, host: String) = {
+  def generateHttpHandler(promise: DefaultPromise[Response]) = {
     new AsyncHandler[Response]() {
       val builder =
         new Response.ResponseBuilder()
@@ -58,6 +67,7 @@ class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
         log.error(t.getMessage)
         // process exception
         // processExceptionFromResponse
+        promise.failure(t)
       }
 
       def onBodyPartReceived(bodyPart: HttpResponseBodyPart) = {
@@ -87,7 +97,7 @@ class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
 
       def onCompleted() = {
         val response = builder.build()
-        processCompletedResponse(sender, host, response)
+        promise.success(response)
         response
       }
     }
