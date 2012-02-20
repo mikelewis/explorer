@@ -66,8 +66,6 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
 
       def onThrowable(t: Throwable) {
         log.error(t.getMessage)
-        // process exception
-        // processExceptionFromResponse
         promise.failure(t)
       }
 

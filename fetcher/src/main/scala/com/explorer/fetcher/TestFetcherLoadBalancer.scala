@@ -2,10 +2,20 @@ package com.explorer.fetcher
 
 import akka.actor.Props
 import akka.actor.ActorSystem
+import com.ning.http.client.Response
+
+object SampleHooks extends Hooks {
+  override def canContinueFromStatusCode(response: Response, status: Integer) = {
+    if (status == 404)
+      false
+    else
+      true
+  }
+}
 
 object TestFetcherLoadBalancer extends App {
   val system = ActorSystem("MySystem")
-  val fetcherLoadBalancerActor = system.actorOf(Props(new FetcherLoadBalancer(system, FetchConfig())))
+  val fetcherLoadBalancerActor = system.actorOf(Props(new FetcherLoadBalancer(system, FetchConfig(hooks = SampleHooks))))
 
   /*
   fetcherLoadBalancerActor ! FetchUrl("leafo.net", "http://leafo.net")
@@ -20,6 +30,6 @@ object TestFetcherLoadBalancer extends App {
   fetcherLoadBalancerActor ! FetchUrl("techcrunch.com", "http://techcrunch.com/2012/02/19/solvate-shutting-down/")
 */
 
-  fetcherLoadBalancerActor ! FetchUrl("cnn.com", "http://www.casdfasdfnn.com/2012/02/19/us/washington-avalanche-deaths/index.html?hpt=hp_t1")
+  fetcherLoadBalancerActor ! FetchUrl("cnn.com", "http://www.cnn.com/4o4.html")
 
 }
