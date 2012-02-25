@@ -6,5 +6,6 @@ class TrafficMan(fetcher: ActorRef, queue: ActorRef) extends Actor {
   def receive = {
     case StartTrafficMan => queue ! QueueStartListening
     case job: FetchUrl => fetcher ! job
+    case doneJob: DoneFetchUrl => queue ! doneJob
   }
 }

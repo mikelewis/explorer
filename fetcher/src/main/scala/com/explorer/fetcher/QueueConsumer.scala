@@ -15,6 +15,7 @@ class QueueConsumer(queue: String, currentlyProcessingQueue: String) extends Act
 
   def receive = {
     case QueueStartListening => listenToQueue(sender)
+    case DoneFetchUrl(url) => ackUrl(url)
   }
 
   def listenToQueue(trafficMan: ActorRef) {
@@ -29,6 +30,10 @@ class QueueConsumer(queue: String, currentlyProcessingQueue: String) extends Act
     } onComplete { result =>
       listenToQueue(trafficMan)
     }
+  }
+  
+  def ackUrl(url: String) {
+    log.info("Finished url job " + url)
   }
 
   def processMessage(trafficMan: ActorRef, byteString: ByteString) {
