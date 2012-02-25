@@ -3,7 +3,7 @@ package com.explorer.fetcher
 import akka.actor.Props
 import akka.actor.ActorSystem
 import com.ning.http.client.Response
-
+/*
 object SampleHooks extends Hooks {
   override def canContinueFromStatusCode(response: Response, status: Integer) = {
     if (status == 404)
@@ -32,4 +32,4 @@ object TestFetcherLoadBalancer extends App {
 
   fetcherLoadBalancerActor ! FetchUrl("cnn.com", "http://www.cnn.com/4o4.html")
 
-}
+}*/

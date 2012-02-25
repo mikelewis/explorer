@@ -3,7 +3,7 @@ import akka.actor.Actor
 import akka.actor.Props
 import akka.actor.ActorSystem
 import akka.routing.Broadcast
-
+/*
 class FetcherLoadBalancer(system: ActorSystem, fetchConfig: FetchConfig) extends Actor {
 
   val fetchers = Vector.fill(5)(context.actorOf(Props(new Fetcher(self, system, fetchConfig))))
@@ -19,4 +19,4 @@ class FetcherLoadBalancer(system: ActorSystem, fetchConfig: FetchConfig) extends
   def handleDoneFetchUrl(host: String, url: String) {
     println("url: " + url + " fetched")
   }
-}
+}*/
