@@ -12,3 +12,10 @@ Fetcher has many URLWorkers that are supervised.
 
 
 To scale, just add more fetchers to consume from queue.
+
+
+FetchURL Message (in JSON):
+
+{
+  :url => "http://google.com"
+}

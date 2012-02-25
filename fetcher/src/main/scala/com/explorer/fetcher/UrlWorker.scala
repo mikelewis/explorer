@@ -22,16 +22,17 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
   val hooks = fetchConfig.hooks
 
   def receive = {
-    case FetchUrl(host, url) =>
-      processUrl(sender, host, url)
+    case FetchUrl(url) =>
+      processUrl(sender, url)
   }
 
-  def processUrl(sender: ActorRef, host: String, url: String) {
+  def processUrl(sender: ActorRef, url: String) {
+    log.info("Fetching " + url)
     val promise = new DefaultPromise[Response]
     promise.onSuccess { 
-      case response: Response => sender ! responseToCompletedFetch(host, response)
+      case response: Response => sender ! responseToCompletedFetch(response)
     } onFailure {
-      case ex => sender ! FailedFetch(host, url, processExceptionFromResponse(ex))
+      case ex => sender ! FailedFetch(url, processExceptionFromResponse(ex))
     }
     
     client.prepareGet(url).execute(generateHttpHandler(promise))
@@ -50,13 +51,13 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
     }
   }
 
-  def responseToCompletedFetch(host: String, response: Response): CompletedFetch = {
+  def responseToCompletedFetch(response: Response): CompletedFetch = {
     val url = response.getUri.toString
     if (!response.hasResponseHeaders)
-      return FailedFetch(host, url, AbortedDocumentDuringStatus())
+      return FailedFetch(url, AbortedDocumentDuringStatus())
     if (!response.hasResponseBody)
-      return FailedFetch(host, url, AbortedDocumentDuringHeaders())
-    SucessfulFetch(host, url, response.getStatusCode, getHeadersFromResponse(response), response.getResponseBody)
+      return FailedFetch(url, AbortedDocumentDuringHeaders())
+    SucessfulFetch(url, response.getStatusCode, getHeadersFromResponse(response), response.getResponseBody)
   }
 
   def generateHttpHandler(promise: DefaultPromise[Response]) = {

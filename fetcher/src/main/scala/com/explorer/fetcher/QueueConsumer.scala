@@ -4,8 +4,12 @@ import akka.actor.ActorRef
 import net.fyrie.redis._
 import akka.actor.ActorSystem
 import net.liftweb.json._
+import akka.util.ByteString
+import net.liftweb.json._
 
-class QueueConsumer(fetcher: ActorRef) extends Actor {
+class QueueConsumer(fetcher: ActorRef) extends Actor
+  with akka.actor.ActorLogging {
+  implicit val formats = net.liftweb.json.DefaultFormats
 
   val r = RedisClient(SystemSettings.config.redisHost, SystemSettings.config.redisPort)(context.system)
 
@@ -18,7 +22,7 @@ class QueueConsumer(fetcher: ActorRef) extends Actor {
     result.onSuccess {
       case x => {
         x.foreach {
-          case (queue, byteArray) => parseAndProcessItem(byteArray)
+          case (queue, byteString) => processMessage(byteString)
         }
       }
     } onComplete { result =>
@@ -26,11 +30,14 @@ class QueueConsumer(fetcher: ActorRef) extends Actor {
     }
   }
 
-  def parseAndProcessItem(result: akka.util.ByteString) {
-    println("AHHH GOT RESULT FROM QUEUE " + result.utf8String)
+  def processMessage(byteString: ByteString) {
+    val job = jsonToJob(byteString.utf8String)
+    log.info("Got job from queue: " + job)
+    fetcher ! job
   }
 
-  def fetchUrl(host: String, url: String) {
-    fetcher ! FetchUrl(host, url)
+  def jsonToJob(msg: String): WorkType = {
+    val json = parse(msg)
+    json.extract[FetchUrl]
   }
 }

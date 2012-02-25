@@ -17,7 +17,7 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
   }
 
   def receive = {
-    case FetchUrl(host, url) => router ! FetchUrl(host, url)
+    case FetchUrl(url) => router ! FetchUrl(url)
     case completedFetch: CompletedFetch => handleCompletedFetch(completedFetch)
   }
 
@@ -27,7 +27,7 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
       case failure: FailedFetch => handleFailedFetch(failure)
     }
 
-    handleDoneUrlWorker(completedFetch.host, completedFetch.url)
+    handleDoneUrlWorker(completedFetch.url)
   }
 
   def handleSuccessFetch(success: SucessfulFetch) {
@@ -38,7 +38,7 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
     log.info("Got a failed fetch " + failed)
   }
 
-  def handleDoneUrlWorker(host: String, url: String) {
+  def handleDoneUrlWorker(url: String) {
     // send to FetchedURLQueue
     // ack to queue
   }
