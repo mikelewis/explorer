@@ -7,7 +7,10 @@ object FetcherRunner extends App {
   SystemSettings.config = Settings(system)
 
   val fetcher = system.actorOf(Props(new Fetcher(FetchConfig())))
+
+  val queueConsumer = system.actorOf(Props(new QueueConsumer(SystemSettings.config.redisQueue, SystemSettings.config.redisCurrentlyProcessingQueue)))
+
+  val trafficMan = system.actorOf(Props(new TrafficMan(fetcher, queueConsumer)))
   
-  val queueConsumer = system.actorOf(Props(new QueueConsumer(fetcher)))
-  queueConsumer ! QueueStartListening(SystemSettings.config.redisQueue)
+  trafficMan ! StartTrafficMan
 }

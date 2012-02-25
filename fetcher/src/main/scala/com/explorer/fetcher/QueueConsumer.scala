@@ -7,33 +7,34 @@ import net.liftweb.json._
 import akka.util.ByteString
 import net.liftweb.json._
 
-class QueueConsumer(fetcher: ActorRef) extends Actor
+class QueueConsumer(queue: String, currentlyProcessingQueue: String) extends Actor
   with akka.actor.ActorLogging {
   implicit val formats = net.liftweb.json.DefaultFormats
 
   val r = RedisClient(SystemSettings.config.redisHost, SystemSettings.config.redisPort)(context.system)
 
   def receive = {
-    case QueueStartListening(queue) => listenToQueue(queue)
+    case QueueStartListening => listenToQueue(sender)
   }
 
-  def listenToQueue(queue: String) {
+  def listenToQueue(trafficMan: ActorRef) {
+    //r.brpoplpush(queue, currentlyProcessingQueue)
     val result = r.blpop(Seq(queue))
     result.onSuccess {
       case x => {
         x.foreach {
-          case (queue, byteString) => processMessage(byteString)
+          case (queue, byteString) => processMessage(trafficMan, byteString)
         }
       }
     } onComplete { result =>
-      listenToQueue(queue)
+      listenToQueue(trafficMan)
     }
   }
 
-  def processMessage(byteString: ByteString) {
+  def processMessage(trafficMan: ActorRef, byteString: ByteString) {
     val job = jsonToJob(byteString.utf8String)
-    log.info("Got job from queue: " + job)
-    fetcher ! job
+    log.info("Sending job: " + job + " to trafficman " + trafficMan)
+    trafficMan ! job
   }
 
   def jsonToJob(msg: String): WorkType = {
