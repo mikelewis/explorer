@@ -12,6 +12,7 @@ class SettingsImpl(config: Config) extends Extension {
   val redisPort = config.getInt("redis.port")
   val redisQueue = config.getString("redis.queue")
   val redisCurrentlyProcessingQueue = config.getString("redis.processing_queue")
+  val redisFetchedUrlQueue = config.getString("redis.fetched_url_queue")
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {

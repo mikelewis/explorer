@@ -4,6 +4,7 @@ import akka.actor.Props
 import akka.actor.ActorSystem
 import com.ning.http.client.AsyncHttpClient
 import akka.routing.RoundRobinRouter
+import net.fyrie.redis._
 
 class Fetcher(fetchConfig: FetchConfig) extends Actor
   with akka.actor.ActorLogging {
@@ -12,8 +13,11 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
   val urlWorkers = Vector.fill(5)(context.actorOf(Props(new UrlWorker(context.system, httpClient, fetchConfig))))
   val router = context.actorOf(Props(new UrlWorker(context.system, httpClient, fetchConfig)).withRouter(RoundRobinRouter(urlWorkers)))
 
+  val r = RedisClient(SystemSettings.config.redisHost, SystemSettings.config.redisPort)(context.system)
+
   override def postStop() {
     httpClient.close
+    r.disconnect
   }
 
   def receive = {
@@ -31,11 +35,21 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
   }
 
   def handleSuccessFetch(success: SucessfulFetch) {
-    log.info("Success! Fetch Header " + success.headers)
+    val json = JsonHelper.prepareForFetchedUrlQueue(success)
+    log.info("Preparing to send successful fetch to fetched_url queue " +
+      json)
+    pushToFetchedUrlQueue(json)
   }
 
   def handleFailedFetch(failed: FailedFetch) {
-    log.info("Got a failed fetch " + failed)
+    val json = JsonHelper.prepareForFetchedUrlQueue(failed)
+    log.info("Preparing to send failed fetch to fetched_url queue " +
+      json)
+    pushToFetchedUrlQueue(json)
+  }
+
+  def pushToFetchedUrlQueue(json: String) {
+    r.quiet.lpush(SystemSettings.config.redisFetchedUrlQueue, json)
   }
 
   def handleDoneUrlWorker(completedFetch: CompletedFetch) {

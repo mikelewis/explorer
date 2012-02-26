@@ -3,7 +3,6 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 import net.fyrie.redis._
 import akka.actor.ActorSystem
-import net.liftweb.json._
 import akka.util.ByteString
 import net.liftweb.json._
 import net.liftweb.json.Serialization.{read,write}
@@ -14,6 +13,10 @@ class QueueConsumer(queue: String, currentlyProcessingQueue: String) extends Act
 
   val r = RedisClient(SystemSettings.config.redisHost, SystemSettings.config.redisPort)(context.system)
 
+  override def postStop {
+    r.disconnect
+  }
+  
   def receive = {
     case QueueStartListening => listenToQueue(sender)
     case DoneFetchUrl(url) => ackUrl(url)
