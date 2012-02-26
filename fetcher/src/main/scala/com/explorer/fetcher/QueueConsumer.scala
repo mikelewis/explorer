@@ -6,6 +6,7 @@ import akka.actor.ActorSystem
 import net.liftweb.json._
 import akka.util.ByteString
 import net.liftweb.json._
+import net.liftweb.json.Serialization.{read,write}
 
 class QueueConsumer(queue: String, currentlyProcessingQueue: String) extends Actor
   with akka.actor.ActorLogging {
@@ -19,12 +20,11 @@ class QueueConsumer(queue: String, currentlyProcessingQueue: String) extends Act
   }
 
   def listenToQueue(trafficMan: ActorRef) {
-    //r.brpoplpush(queue, currentlyProcessingQueue)
-    val result = r.blpop(Seq(queue))
+    val result = r.brpoplpush(queue, currentlyProcessingQueue)
     result.onSuccess {
       case x => {
         x.foreach {
-          case (queue, byteString) => processMessage(trafficMan, byteString)
+          byteString => processMessage(trafficMan, byteString)
         }
       }
     } onComplete { result =>
@@ -33,7 +33,10 @@ class QueueConsumer(queue: String, currentlyProcessingQueue: String) extends Act
   }
   
   def ackUrl(url: String) {
-    log.info("Finished url job " + url)
+    val jobToRemove = write(FetchUrl(url))
+    log.info("Finished url job " + jobToRemove)
+    log.info("Removing from " + currentlyProcessingQueue + " in queue")
+    r.quiet.lrem(currentlyProcessingQueue, jobToRemove, 1)
   }
 
   def processMessage(trafficMan: ActorRef, byteString: ByteString) {
@@ -42,8 +45,7 @@ class QueueConsumer(queue: String, currentlyProcessingQueue: String) extends Act
     trafficMan ! job
   }
 
-  def jsonToJob(msg: String): WorkType = {
-    val json = parse(msg)
-    json.extract[FetchUrl]
+  def jsonToJob(msg: String): FetchUrl = {
+    read[FetchUrl](msg)
   }
 }
