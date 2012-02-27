@@ -27,14 +27,14 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
 
   def handleCompletedFetch(completedFetch: CompletedFetch) {
     completedFetch match {
-      case success: SucessfulFetch => handleSuccessFetch(success)
+      case success: SuccessfulFetch => handleSuccessFetch(success)
       case failure: FailedFetch => handleFailedFetch(failure)
     }
 
     handleDoneUrlWorker(completedFetch)
   }
 
-  def handleSuccessFetch(success: SucessfulFetch) {
+  def handleSuccessFetch(success: SuccessfulFetch) {
     val json = JsonHelper.prepareForFetchedUrlQueue(success)
     log.info("Preparing to send successful fetch to fetched_url queue " +
       json)

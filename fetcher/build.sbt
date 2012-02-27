@@ -1,4 +1,4 @@
-name := "Explorer-Fetcherr"
+name := "fetcher"
 
 version := "1.0"
 
@@ -6,14 +6,16 @@ scalaVersion := "2.9.1"
 
 resolvers += "Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/"
 
+resolvers += "Akka Snapshot Repo" at "http://akka.io/snapshots"
+
 resolvers ++= Seq("snapshots" at "http://scala-tools.org/repo-snapshots",
     "releases"  at "http://scala-tools.org/repo-releases")
 
 resolvers += "fyrie snapshots" at "http://repo.fyrie.net/snapshots"
 
-libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0-RC2"
+libraryDependencies += "com.typesafe.akka" % "akka-actor" % "2.0-20120124-000638"
 
-libraryDependencies += "com.typesafe.akka" % "akka-testkit" % "2.0-RC2"
+libraryDependencies += "com.typesafe.akka" % "akka-testkit" % "2.0-20120124-000638" % "test"
 
 libraryDependencies ++= Seq(
     "net.liftweb" %% "lift-json" % "2.4-RC1",

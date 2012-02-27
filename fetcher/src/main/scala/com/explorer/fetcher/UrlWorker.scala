@@ -56,7 +56,7 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
       return FailedFetch(trafficMan, originalUrl, AbortedDocumentDuringStatus(response.getUri.toString))
     if (!response.hasResponseBody)
       return FailedFetch(trafficMan, originalUrl, AbortedDocumentDuringHeaders(response.getUri.toString))
-    SucessfulFetch(trafficMan, originalUrl, response.getUri.toString, response.getStatusCode, getHeadersFromResponse(response), response.getResponseBody)
+    SuccessfulFetch(trafficMan, originalUrl, response.getUri.toString, response.getStatusCode, getHeadersFromResponse(response), response.getResponseBody)
   }
 
   def generateHttpHandler(promise: DefaultPromise[Response]) = {

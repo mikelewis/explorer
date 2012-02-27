@@ -3,12 +3,15 @@ import Keys._
 
 object ExplorerBuild extends Build {
   lazy val root = Project(id = "explorer",
-    base = file(".")) aggregate(fetcher, processor)
+    base = file(".")) aggregate(common, fetcher, processor)
 
-  lazy val fetcher = Project(id = "explorer-fetcher",
-    base = file("fetcher"))
+  lazy val fetcher = Project(id = "fetcher",
+    base = file("fetcher")) dependsOn(common)
 
-  lazy val processor = Project(id = "explorer-processor",
-    base = file("processor"))
+  lazy val processor = Project(id = "processor",
+    base = file("processor")) dependsOn(common)
+
+  lazy val common = Project(id = "common",
+    base = file("common"))
 }
 
