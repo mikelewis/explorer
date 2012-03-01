@@ -14,6 +14,7 @@ resolvers ++= Seq("snapshots" at "http://scala-tools.org/repo-snapshots",
     "releases"  at "http://scala-tools.org/repo-releases")
 
 libraryDependencies ++= Seq(
+    "net.liftweb" %% "lift-json" % "2.4-RC1",
     "net.fyrie" %% "fyrie-redis" % "2.0-SNAPSHOT",
     "org.jsoup" % "jsoup" % "1.6.1",
     "com.ning" % "async-http-client" % "1.6.4" % "compile",
