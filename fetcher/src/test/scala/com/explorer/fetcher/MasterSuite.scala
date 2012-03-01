@@ -7,8 +7,9 @@ import akka.actor.Actor
 import akka.actor.ActorSystem
 import com.ning.http.client.AsyncHttpClient
 import akka.actor.ActorRef
+import com.explorer.common.BaseMasterSuite
 
-class MasterSuite extends FunSpec with ShouldMatchers {
+trait MasterSuite extends BaseMasterSuite {
   implicit val system = ActorSystem("FetcherSystem")
   
   SystemSettings.config = Settings(system)

@@ -1,4 +1,4 @@
-package com.explorer.fetcher
+package com.explorer.common
 import org.scalatest.BeforeAndAfterAll
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.server.handler.ContextHandler
@@ -8,7 +8,8 @@ import org.eclipse.jetty.server.handler.DefaultHandler
 import org.eclipse.jetty.server.handler.HandlerList
 import org.eclipse.jetty.server.handler.ResourceHandler
 
-class RunTestServer extends MasterSuite with BeforeAndAfterAll {
+// extends BaseMaster Suite to all mixin of BeforeAndAfterALl
+class RunTestServer extends BaseMasterSuite with BeforeAndAfterAll {
   var actualPort = 0
   val actualBaseUrl = "http://localhost"
   override def beforeAll(configMap: Map[String, Any]) {
