@@ -11,7 +11,7 @@ import com.explorer.common.BaseMasterSuite
 
 trait MasterSuite extends BaseMasterSuite {
   implicit val system = ActorSystem("FetcherSystem")
-  
+
   SystemSettings.config = Settings(system)
 
   def testUrlWorker(fetchConfig: FetchConfig = FetchConfig()) = {
@@ -25,7 +25,11 @@ trait MasterSuite extends BaseMasterSuite {
   }
 
   def testQueue(queue: String = "sample_queue", currentlyProcessing: String = "sample_processing") = {
-    val actorRef = TestActorRef(new QueueConsumer(queue, currentlyProcessing))
+    val queueConsumerObj = new QueueConsumer(SystemSettings.config.redisHost,
+      SystemSettings.config.redisPort,
+      SystemSettings.config.redisQueue,
+      SystemSettings.config.redisCurrentlyProcessingQueue)
+    val actorRef = TestActorRef(queueConsumerObj)
     (actorRef, actorRef.underlyingActor)
   }
 
