@@ -6,9 +6,14 @@ import com.explorer.common.QueueStartListening
 
 class TrafficMan(fetcher: ActorRef, queue: ActorRef) extends Actor {
   def receive = {
-    case StartTrafficMan => queue ! QueueStartListening
+    case StartTrafficMan => startTrafficMan
     case job: FetchUrl => fetcher ! job
     case doneJob: DoneFetchUrl => handleDoneFetchUrl(doneJob)
+  }
+  
+  def startTrafficMan {
+    queue ! QueueStartListening
+    fetcher ! RegisterTrafficMan
   }
 
   def handleDoneFetchUrl(doneJob: DoneFetchUrl) {

@@ -22,17 +22,17 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
   val hooks = fetchConfig.hooks
 
   def receive = {
-    case DownloadUrl(trafficMan, url) =>
-      processUrl(sender, trafficMan, url)
+    case DownloadUrl(url) =>
+      processUrl(sender, url)
   }
 
-  def processUrl(sender: ActorRef, trafficMan: ActorRef, url: String) {
+  def processUrl(sender: ActorRef, url: String) = {
     log.info("Fetching " + url)
     val promise = new DefaultPromise[Response]
     promise.onSuccess {
-      case response: Response => sender ! responseToCompletedFetch(trafficMan, url, response)
+      case response: Response => sender ! responseToCompletedFetch(url, response)
     } onFailure {
-      case ex => sender ! FailedFetch(trafficMan, url, processExceptionFromResponse(ex))
+      case ex => sender ! FailedFetch(url, processExceptionFromResponse(ex))
     }
 
     client.prepareGet(url).execute(generateHttpHandler(promise))
@@ -51,12 +51,12 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
     }
   }
 
-  def responseToCompletedFetch(trafficMan: ActorRef, originalUrl: String, response: Response): CompletedFetch = {
+  def responseToCompletedFetch(originalUrl: String, response: Response): CompletedFetch = {
     if (!response.hasResponseHeaders)
-      return FailedFetch(trafficMan, originalUrl, AbortedDocumentDuringStatus(response.getUri.toString))
+      return FailedFetch(originalUrl, AbortedDocumentDuringStatus(response.getUri.toString))
     if (!response.hasResponseBody)
-      return FailedFetch(trafficMan, originalUrl, AbortedDocumentDuringHeaders(response.getUri.toString))
-    SuccessfulFetch(trafficMan, originalUrl, response.getUri.toString, response.getStatusCode, getHeadersFromResponse(response), response.getResponseBody)
+      return FailedFetch(originalUrl, AbortedDocumentDuringHeaders(response.getUri.toString))
+    SuccessfulFetch(originalUrl, response.getUri.toString, response.getStatusCode, getHeadersFromResponse(response), response.getResponseBody)
   }
 
   def generateHttpHandler(promise: DefaultPromise[Response]) = {
