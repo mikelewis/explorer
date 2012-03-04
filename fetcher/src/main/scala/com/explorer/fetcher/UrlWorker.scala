@@ -23,10 +23,10 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
 
   def receive = {
     case DownloadUrl(url) =>
-      processUrl(sender, url)
+      setupAndProcessUrl(sender, url)
   }
 
-  def processUrl(sender: ActorRef, url: String) = {
+  def setupAndProcessUrl(sender: ActorRef, url: String) {
     log.info("Fetching " + url)
     val promise = new DefaultPromise[Response]
     promise.onSuccess {
@@ -35,6 +35,10 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
       case ex => sender ! FailedFetch(url, processExceptionFromResponse(ex))
     }
 
+    processUrl(url, promise)
+  }
+
+  def processUrl(url: String, promise: DefaultPromise[Response] = (new DefaultPromise[Response])) = {
     client.prepareGet(url).execute(generateHttpHandler(promise))
     promise
   }
