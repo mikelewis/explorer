@@ -13,11 +13,10 @@ import akka.actor.Actor
 import collection.JavaConversions._
 import akka.actor.ActorRef
 import akka.dispatch.DefaultPromise
-import akka.actor.ActorSystem
 
-class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
+class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
   with akka.actor.ActorLogging {
-  implicit def dispatcher = system.dispatcher
+  implicit def dispatcher = context.system.dispatcher
 
   val hooks = fetchConfig.hooks
 
@@ -43,16 +42,11 @@ class UrlWorker(system: ActorSystem, client: AsyncHttpClient, fetchConfig: Fetch
     promise
   }
 
-  def processExceptionFromResponse(e: Throwable): FailedReason = {
-    e match {
-      case e =>
-        e.getCause() match {
-          case ce: java.net.ConnectException => ConnectionError(ce)
-          case mu: java.net.MalformedURLException => MalformedUrl(mu)
-          case ura: java.nio.channels.UnresolvedAddressException => UnresolvedAddress(ura)
-          case somethingElse => throw somethingElse
-        }
-    }
+  def processExceptionFromResponse: PartialFunction[Throwable, FailedReason] = {
+    case ce: java.net.ConnectException => ConnectionError(ce)
+    case mu: java.net.MalformedURLException => MalformedUrl(mu)
+    case ura: java.nio.channels.UnresolvedAddressException => UnresolvedAddress(ura)
+    case somethingElse => throw somethingElse
   }
 
   def responseToCompletedFetch(originalUrl: String, response: Response): CompletedFetch = {

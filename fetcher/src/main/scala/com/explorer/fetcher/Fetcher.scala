@@ -11,8 +11,8 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
   with akka.actor.ActorLogging {
   val httpClient = new AsyncHttpClient(fetchConfig.httpClientConfig)
 
-  val urlWorkers = Vector.fill(5)(context.actorOf(Props(new UrlWorker(context.system, httpClient, fetchConfig))))
-  val router = context.actorOf(Props(new UrlWorker(context.system, httpClient, fetchConfig)).withRouter(RoundRobinRouter(urlWorkers)))
+  val urlWorkers = Vector.fill(5)(context.actorOf(Props(new UrlWorker(httpClient, fetchConfig))))
+  val router = context.actorOf(Props(new UrlWorker(httpClient, fetchConfig)).withRouter(RoundRobinRouter(urlWorkers)))
 
   val r = RedisClient(SystemSettings.config.redisHost, SystemSettings.config.redisPort)(context.system)
 

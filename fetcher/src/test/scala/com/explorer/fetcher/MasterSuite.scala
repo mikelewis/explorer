@@ -15,7 +15,7 @@ trait MasterSuite extends BaseMasterSuite {
   SystemSettings.config = Settings(system)
 
   def testUrlWorker(fetchConfig: FetchConfig = FetchConfig()) = {
-    val actorRef = TestActorRef(new UrlWorker(system, new AsyncHttpClient(fetchConfig.httpClientConfig), fetchConfig))
+    val actorRef = TestActorRef(new UrlWorker(new AsyncHttpClient(fetchConfig.httpClientConfig), fetchConfig))
     (actorRef, actorRef.underlyingActor)
   }
 
