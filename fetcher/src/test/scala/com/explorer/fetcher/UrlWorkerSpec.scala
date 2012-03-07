@@ -8,11 +8,23 @@ import com.ning.http.client.Response
 import akka.util.duration._
 import akka.dispatch.Await
 import scala.collection.JavaConversions._
+import akka.pattern.{ ask }
+import akka.util.Timeout
 
 @RunWith(classOf[JUnitRunner])
 class UrlWorkerSpec extends RunTestServer with TestHooks
   with BeforeAndAfterEach with MasterSuite {
   var (actorRef, actor) = testUrlWorker()
+
+  var realActor = testActualUrlWorker()
+
+  override def beforeEach() {
+    realActor = testActualUrlWorker()
+  }
+
+  def setActor(fetchConfig: FetchConfig) {
+    realActor = testActualUrlWorker(fetchConfig)
+  }
 
   describe("processExceptionFromResponse") {
     it("should return a ConnectionError") {
@@ -55,6 +67,46 @@ class UrlWorkerSpec extends RunTestServer with TestHooks
       val promise = actor.processUrl(getUrl("links.html"))
       val response = Await.result(promise.future, 10 seconds).asInstanceOf[Response]
       actor.responseToCompletedFetch(getUrl("links.html"), response) should be(FailedFetch(getUrl("links.html"), AbortedDocumentDuringHeaders(response.getUri.toString)))
+    }
+  }
+
+  describe("Hooks") {
+    implicit val timeout = Timeout(5 seconds)
+
+    it("should abort request when header hook returns false") {
+      setActor((FetchConfig(hooks = TestHeaderHookFail)))
+      val future = ask(realActor, DownloadUrl(getUrl("basic.html"))).mapTo[FailedFetch]
+      Await.result(future, 10 seconds).failedReason.isInstanceOf[AbortedDocumentDuringHeaders] should be(true)
+    }
+
+    it("should continue request when header hook returns true") {
+      setActor((FetchConfig(hooks = TestHeaderHookPass)))
+      val future = ask(realActor, DownloadUrl(getUrl("basic.html")))
+      Await.result(future, 10 seconds).isInstanceOf[SuccessfulFetch] should be(true)
+    }
+
+    it("should abort request when status hook returns false") {
+      setActor((FetchConfig(hooks = TestStatusHookFail)))
+      val future = ask(realActor, DownloadUrl(getUrl("basic.html"))).mapTo[FailedFetch]
+      Await.result(future, 10 seconds).failedReason.isInstanceOf[AbortedDocumentDuringStatus] should be(true)
+    }
+
+    it("continue request when status hook returns true") {
+      setActor((FetchConfig(hooks = TestStatusHookPass)))
+      val future = ask(realActor, DownloadUrl(getUrl("basic.html")))
+      Await.result(future, 10 seconds).isInstanceOf[SuccessfulFetch] should be(true)
+    }
+
+    it("abort request when bodypart hook returns false") {
+      setActor((FetchConfig(hooks = TestBodyPartHookFail)))
+      val future = ask(realActor, DownloadUrl(getUrl("long.html"))).mapTo[SuccessfulFetch]
+      Await.result(future, 10 seconds).body.length should be < 146170
+    }
+
+    it("continue request when bodypart hook returns true") {
+      setActor((FetchConfig(hooks = TestBodyPartHookPass)))
+      val future = ask(realActor, DownloadUrl(getUrl("long.html"))).mapTo[SuccessfulFetch]
+      Await.result(future, 10 seconds).body.length should be(146170)
     }
   }
 

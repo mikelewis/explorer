@@ -25,7 +25,7 @@ class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
       setupAndProcessUrl(sender, url)
   }
 
-  def setupAndProcessUrl(sender: ActorRef, url: String) {
+  def setupAndProcessUrl(sender: ActorRef, url: String) = {
     log.info("Fetching " + url)
     val promise = new DefaultPromise[Response]
     promise.onSuccess {

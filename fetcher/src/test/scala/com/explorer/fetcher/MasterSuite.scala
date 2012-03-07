@@ -8,14 +8,19 @@ import akka.actor.ActorSystem
 import com.ning.http.client.AsyncHttpClient
 import akka.actor.ActorRef
 import com.explorer.common.BaseMasterSuite
+import akka.actor.Props
 
 trait MasterSuite extends BaseMasterSuite {
   implicit val system = ActorSystem("FetcherSystem")
 
   SystemSettings.config = Settings(system)
 
+  def asyncHttpClient(fetchConfig: FetchConfig = FetchConfig()) = {
+    new AsyncHttpClient(fetchConfig.httpClientConfig)
+  }
+
   def testUrlWorker(fetchConfig: FetchConfig = FetchConfig()) = {
-    val actorRef = TestActorRef(new UrlWorker(new AsyncHttpClient(fetchConfig.httpClientConfig), fetchConfig))
+    val actorRef = TestActorRef(new UrlWorker(asyncHttpClient(fetchConfig), fetchConfig))
     (actorRef, actorRef.underlyingActor)
   }
 
@@ -36,5 +41,9 @@ trait MasterSuite extends BaseMasterSuite {
   def testTrafficMan(fetcher: ActorRef = testFetcher()._1, queue: ActorRef = testQueue()._1) = {
     val actorRef = TestActorRef(new TrafficMan(fetcher, queue))
     (actorRef, actorRef.underlyingActor)
+  }
+
+  def testActualUrlWorker(fetchConfig: FetchConfig = FetchConfig()) = {
+    system.actorOf(Props(new UrlWorker(asyncHttpClient(fetchConfig), fetchConfig)))
   }
 }
