@@ -13,6 +13,7 @@ import akka.actor.Actor
 import collection.JavaConversions._
 import akka.actor.ActorRef
 import akka.dispatch.DefaultPromise
+import akka.pattern.pipeTo
 
 class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
   with akka.actor.ActorLogging {
@@ -22,22 +23,17 @@ class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
 
   def receive = {
     case DownloadUrl(url) =>
-      setupAndProcessUrl(sender, url)
-  }
-
-  def setupAndProcessUrl(sender: ActorRef, url: String) = {
-    log.info("Fetching " + url)
-    val promise = new DefaultPromise[Response]
-    promise.onSuccess {
-      case response: Response => sender ! responseToCompletedFetch(url, response)
-    } onFailure {
-      case ex => sender ! FailedFetch(url, processExceptionFromResponse(ex))
-    }
-
-    processUrl(url, promise)
+      processUrl(url).map { result =>
+        result match {
+          case response: Response => responseToCompletedFetch(url, response)
+        }
+      }.recover {
+        case ex => FailedFetch(url, processExceptionFromResponse(ex))
+      }.pipeTo(sender)
   }
 
   def processUrl(url: String, promise: DefaultPromise[Response] = (new DefaultPromise[Response])) = {
+    log.info("Fetching " + url)
     client.prepareGet(url).execute(generateHttpHandler(promise))
     promise
   }
