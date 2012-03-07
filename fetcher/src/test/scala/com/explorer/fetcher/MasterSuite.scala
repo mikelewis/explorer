@@ -39,7 +39,7 @@ trait MasterSuite extends BaseMasterSuite {
   }
 
   def testTrafficMan(fetcher: ActorRef = testFetcher()._1, queue: ActorRef = testQueue()._1) = {
-    val actorRef = TestActorRef(new TrafficMan(fetcher, queue))
+    val actorRef = TestActorRef(new FetcherTrafficMan(fetcher, queue))
     (actorRef, actorRef.underlyingActor)
   }
 

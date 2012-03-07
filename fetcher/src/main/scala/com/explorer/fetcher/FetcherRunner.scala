@@ -1,6 +1,7 @@
 package com.explorer.fetcher
 import akka.actor.ActorSystem
 import akka.actor.Props
+import com.explorer.common.StartTrafficMan
 
 object FetcherRunner extends App {
   val system = ActorSystem("FetcherSystem")
@@ -12,7 +13,7 @@ object FetcherRunner extends App {
     SystemSettings.config.redisQueue,
     SystemSettings.config.redisCurrentlyProcessingQueue)))
 
-  val trafficMan = system.actorOf(Props(new TrafficMan(fetcher, queueConsumer)))
+  val trafficMan = system.actorOf(Props(new FetcherTrafficMan(fetcher, queueConsumer)))
 
   trafficMan ! StartTrafficMan
 }

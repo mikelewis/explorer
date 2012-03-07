@@ -1,4 +1,9 @@
-FetchedUrl -> LoadBalancer -> System
+Consumer of FetchedUrlQueue.
+
+To scale, just add more consumers to FetchedUrlQueue.
+
+
+FetchedUrl -> System
 
 LoadBalancer:
   Balances all the Systems.
@@ -8,7 +13,7 @@ LoadBalancer:
 System:
   Handles a slice of all the hosts.
 
-  SystemReceiver -> Process HTML -> URL Processor -> URL Scheduler
+  SystemReceiver -> Process HTML -> URL Processor -> Enqueue to URLScheduler
 
   SystemReceiver:
     What the load balancer passes messages to.
@@ -24,15 +29,3 @@ System:
     Makes sure we have a robots.txt for that host.
     Removes all urls that dont meet robots.txt
     Passes urls along with Crawl-Delay to URL Scheduler.
-
-  URL Scheduler:
-    Contains seperate queues for each host in redis.
-    When we dequeue a url, we send it to the FetchURLQueue (RabbitMQ in this example).
-    In order to dequeue a url:
-      If queue is empty ->
-        send it to FetchURLQUeue
-        set as currently processing for host.
-      else if queue is not empty:
-        Enqueue url in the specific queue for that host.
-    When notified that a url has been processed (from SystemReceiver), will schedule a dequeue of that host's queue for X seconds where X is:
-      If Crawl-Delay has been set on robots.txt, use that delay. Otherwise use default (say 3 seconds).

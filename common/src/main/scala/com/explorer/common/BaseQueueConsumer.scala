@@ -30,5 +30,5 @@ abstract class BaseQueueConsumer(val queue: String, redisHost: String, redisPort
     }
   }
 
-  def processMessage(listener: ActorRef, byteString: ByteString)
+  protected def processMessage(listener: ActorRef, byteString: ByteString)
 }
