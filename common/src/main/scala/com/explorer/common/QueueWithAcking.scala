@@ -1,9 +1,17 @@
 package com.explorer.common
 import akka.actor.ActorRef
+import net.fyrie.redis.RedisClient
 
 case class DoneProcessing(msg: String)
 
-trait QueueWithAcking extends BaseQueueConsumer {
+trait QueueWithAcking[J] extends BaseQueueConsumer[J] {
+  val ackingClient = RedisClient(redisHost, redisPort)(context.system)
+
+  abstract override def postStop {
+    super.postStop
+    ackingClient.disconnect
+  }
+
   abstract override def receive = {
     ({
       case DoneProcessing(msg) => ackMsg(msg)
@@ -23,9 +31,12 @@ trait QueueWithAcking extends BaseQueueConsumer {
     }
   }
 
+  // Currently doesnt ack until the listenToQueue unblocks. We could just create another redis client.
+  // Hmmm...
   def ackMsg(msg: String) {
     log.info("Removing " + msg + " from " + currentlyProcessingQueue)
-    r.quiet.lrem(currentlyProcessingQueue, msg, 1)
+    ackingClient.quiet.lrem(currentlyProcessingQueue, msg, 1)
+
   }
 
   def currentlyProcessingQueue: String

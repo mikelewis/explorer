@@ -1,4 +1,4 @@
-package com.explorer.fetcher
+package com.explorer.processor
 import akka.actor.Extension
 import akka.actor.ExtensionId
 import akka.actor.ExtensionIdProvider
@@ -10,9 +10,8 @@ import java.util.concurrent.TimeUnit
 class SettingsImpl(config: Config) extends Extension {
   val redisHost = config.getString("redis.host")
   val redisPort = config.getInt("redis.port")
-  val redisQueue = config.getString("redis.fetcher_queue")
-  val redisCurrentlyProcessingQueue = config.getString("redis.fetcher_processing_list")
-  val redisFetchedUrlQueue = config.getString("redis.processor_queue")
+  val redisQueue = config.getString("redis.processor_queue")
+  val redisCurrentlyProcessingQueue = config.getString("redis.processor_processing_list")
 }
 
 object Settings extends ExtensionId[SettingsImpl] with ExtensionIdProvider {

@@ -5,7 +5,7 @@ import net.fyrie.redis._
 import akka.actor.ActorSystem
 import akka.util.ByteString
 
-abstract class BaseQueueConsumer(val queue: String, redisHost: String, redisPort: Int) extends Actor
+abstract class BaseQueueConsumer[J](val queue: String, val redisHost: String, val redisPort: Int) extends Actor
   with akka.actor.ActorLogging {
   val r = RedisClient(redisHost, redisPort)(context.system)
 
@@ -30,5 +30,11 @@ abstract class BaseQueueConsumer(val queue: String, redisHost: String, redisPort
     }
   }
 
-  protected def processMessage(listener: ActorRef, byteString: ByteString)
+  def processMessage(trafficMan: ActorRef, byteString: ByteString) {
+    val job = strToJob(byteString.utf8String)
+    log.info("Sending job: " + job + " to trafficman " + trafficMan)
+    trafficMan ! job
+  }
+
+  protected def strToJob(msg: String): J
 }

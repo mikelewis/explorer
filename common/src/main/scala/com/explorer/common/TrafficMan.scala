@@ -4,7 +4,7 @@ import akka.actor.ActorRef
 
 abstract class TrafficMan(other: ActorRef, queue: ActorRef) extends Actor {
   def receive = {
-   trafficDispatcher orElse baseDispatcher
+    trafficDispatcher orElse baseDispatcher
   }
 
   def baseDispatcher: PartialFunction[Any, Unit] = {
@@ -15,7 +15,7 @@ abstract class TrafficMan(other: ActorRef, queue: ActorRef) extends Actor {
   protected def trafficDispatcher: PartialFunction[Any, Unit]
 
   def startTrafficMan {
-    queue ! QueueStartListening
     other ! RegisterTrafficMan
+    queue ! QueueStartListening
   }
 }
