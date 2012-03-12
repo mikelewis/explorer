@@ -55,11 +55,10 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
   }
 
   def pushToFetchedUrlQueue(json: String) {
-    r.quiet.lpush(SystemSettings.config.redisFetchedUrlQueue, json)
+    r.quiet.rpush(SystemSettings.config.redisFetchedUrlQueue, json)
   }
 
   def handleDoneUrlWorker(completedFetch: CompletedFetch) {
     trafficMan ! AckMessage(completedFetch.originalUrl)
   }
-
 }

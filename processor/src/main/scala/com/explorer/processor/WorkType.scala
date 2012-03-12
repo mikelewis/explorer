@@ -2,10 +2,14 @@ package com.explorer.processor
 import org.jsoup.nodes.Document
 
 sealed trait WorkType
-//abstract class BaseProcessorWorkType(originalMsg: String) extends WorkType
+
+abstract class BaseProcessorWorkType(originalMsg: String) extends WorkType
 case class ProcessCompletedFetchedUrl(originalMsg: String, originalUrl: String, finalUrl: String,
-  status: Int, headers: Map[String, String], body: String) extends WorkType
-case class ProcessFailedFetchedUrl(originalMsg: String, originalUrl: String, reason: String) extends WorkType
+  status: Int, headers: Map[String, String], body: String)
+  extends BaseProcessorWorkType(originalMsg)
+
+case class ProcessFailedFetchedUrl(originalMsg: String, originalUrl: String, reason: String)
+  extends BaseProcessorWorkType(originalMsg)
 
 sealed trait HtmlProcessorWorkType extends WorkType
 

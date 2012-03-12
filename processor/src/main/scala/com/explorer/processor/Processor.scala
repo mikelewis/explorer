@@ -29,6 +29,7 @@ class Processor extends Actor with akka.actor.ActorLogging {
   }
 
   def startProcessing(finalUrl: String, status: Int, headers: Map[String, String], body: String) {
+    log.info("Processing page " + finalUrl + " status: " + status + " headers: " + headers)
     val f = for {
       urls <- parseHtml(finalUrl, status, headers, body)
       processedUrls <- processUrls(urls)
@@ -40,6 +41,7 @@ class Processor extends Actor with akka.actor.ActorLogging {
   }
 
   def processUrls(urls: List[String]) = {
+    log.info("Processing urls " + urls)
     urlProcessor.ask(ProcessUrls(urls))(60 seconds).map {
       case DoneProcessUrls(urls) => urls
     }
@@ -62,10 +64,10 @@ class Processor extends Actor with akka.actor.ActorLogging {
   }
 
   def handleFailedFetch(failed: ProcessFailedFetchedUrl) {
-
+    log.info("Failed fetch " + failed)
   }
 
   def sendUrlToUrlScheduler(url: String, crawlDelay: Int) {
-    log.info("GOing to send " + url + " with crawlDelay " + crawlDelay + " to Url Scheduler")
+    log.info("Going to send " + url + " with crawlDelay " + crawlDelay + " to Url Scheduler")
   }
 }
