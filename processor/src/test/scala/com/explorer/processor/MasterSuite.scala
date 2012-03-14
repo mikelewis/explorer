@@ -11,6 +11,9 @@ import com.explorer.common.BaseMasterSuite
 
 trait MasterSuite extends BaseMasterSuite {
   implicit val system = ActorSystem("ProcessorSystem")
-  
- // SystemSettings.config = Settings(system)
+  // SystemSettings.config = Settings(system)
+  def testHtmlProcessor = {
+    val actorRef = TestActorRef(new HtmlProcessor)
+    (actorRef, actorRef.underlyingActor)
+  }
 }

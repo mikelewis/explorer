@@ -16,7 +16,7 @@ class RunTestServer extends BaseMasterSuite with BeforeAndAfterAll {
     val server = new Server(0)
     val resource_handler = new ResourceHandler
     resource_handler.setDirectoriesListed(true)
-    resource_handler.setResourceBase("../common/src/main/resources/sample_files")
+    resource_handler.setResourceBase(SampleFilesPath)
 
     val handlers = new HandlerList
     handlers.setHandlers(Array[Handler](resource_handler, new DefaultHandler()))
@@ -26,16 +26,17 @@ class RunTestServer extends BaseMasterSuite with BeforeAndAfterAll {
     actualPort = server.getConnectors()(0).getLocalPort()
     println("Started server on port: " + actualPort)
   }
-  
+
   def getUrl(path: String) = {
     actualBaseUrl + ":" + actualPort + "/" + path
   }
-  
+
   def relativeToAbsolute(paths: List[String]) = {
     paths.map(path => getUrl(path))
   }
-  
+
   def relativeToAbsolute(str: String*): List[String] = {
     relativeToAbsolute(str.toList)
   }
+
 }
