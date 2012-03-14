@@ -31,8 +31,6 @@ trait QueueWithAcking[J] extends BaseQueueConsumer[J] {
     }
   }
 
-  // Currently doesnt ack until the listenToQueue unblocks. We could just create another redis client.
-  // Hmmm...
   def ackMsg(msg: String) {
     log.info("Removing " + msg + " from " + currentlyProcessingQueue)
     ackingClient.quiet.lrem(currentlyProcessingQueue, msg, 1)

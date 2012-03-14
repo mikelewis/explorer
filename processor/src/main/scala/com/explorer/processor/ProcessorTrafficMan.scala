@@ -6,6 +6,6 @@ class ProcessorTrafficMan(processor: ActorRef, queue: ActorRef)
   extends TrafficMan(processor, queue) {
  
   def trafficDispatcher = {
-    case processorJob: BaseProcessorWorkType => println("YO?"); processor ! processorJob
+    case processorJob: BaseProcessorWorkType => processor ! processorJob
   }
 }
