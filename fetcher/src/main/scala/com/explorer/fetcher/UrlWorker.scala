@@ -17,7 +17,7 @@ import akka.pattern.pipeTo
 
 class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
   with akka.actor.ActorLogging {
-  implicit def dispatcher = context.system.dispatcher
+  implicit def dispatcher = context.dispatcher
 
   val hooks = fetchConfig.hooks
 
