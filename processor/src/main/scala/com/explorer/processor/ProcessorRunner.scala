@@ -5,8 +5,8 @@ import com.explorer.common.StartTrafficMan
 import com.typesafe.config.ConfigFactory
 
 object ProcessRunner extends App {
-  val system = ActorSystem("ProcessorSystem")
   val config = ConfigFactory.load()
+  val system = ActorSystem("ProcessorSystem")
 
   val processor = system.actorOf(Props[Processor])
   val queueConsumer = system.actorOf(Props(new QueueConsumer(config.getString("redis.host"),

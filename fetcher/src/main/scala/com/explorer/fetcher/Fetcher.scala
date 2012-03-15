@@ -16,7 +16,11 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
   val urlWorkers = Vector.fill(fetchConfig.numUrlWorkers)(context.actorOf(Props(new UrlWorker(httpClient, fetchConfig))))
   val router = context.actorOf(Props(new UrlWorker(httpClient, fetchConfig)).withRouter(RoundRobinRouter(urlWorkers)))
 
-  val r = RedisClient(SystemSettings.config.redisHost, SystemSettings.config.redisPort)(context.system)
+  val redisHost = fetchConfig.akkaConfig.getString("redis.host")
+  val redisPort = fetchConfig.akkaConfig.getInt("redis.port")
+  val redisProcessorQueue = fetchConfig.akkaConfig.getString("redis.processor_queue")
+
+  val r = RedisClient(redisHost, redisPort)(context.system)
 
   var trafficMan: ActorRef = _
 
@@ -42,20 +46,20 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
 
   def handleSuccessFetch(success: SuccessfulFetch) {
     val json = JsonHelper.prepareForFetchedUrlQueue(success)
-    log.info("Preparing to send successful fetch to fetched_url queue " +
+    log.info("Preparing to send successful fetch to processor queue " +
       json)
     pushToFetchedUrlQueue(json)
   }
 
   def handleFailedFetch(failed: FailedFetch) {
     val json = JsonHelper.prepareForFetchedUrlQueue(failed)
-    log.info("Preparing to send failed fetch to fetched_url queue " +
+    log.info("Preparing to send failed fetch to processor queue " +
       json)
     pushToFetchedUrlQueue(json)
   }
 
   def pushToFetchedUrlQueue(json: String) {
-    r.quiet.rpush(SystemSettings.config.redisFetchedUrlQueue, json)
+    r.quiet.rpush(redisProcessorQueue, json)
   }
 
   def handleDoneUrlWorker(completedFetch: CompletedFetch) {

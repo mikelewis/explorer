@@ -1,5 +1,6 @@
 package com.explorer.fetcher
 import org.scalatest.FunSpec
+import com.typesafe.config.ConfigFactory
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.OneInstancePerTest
 import akka.testkit.TestActorRef
@@ -11,9 +12,8 @@ import com.explorer.common.BaseMasterSuite
 import akka.actor.Props
 
 trait MasterSuite extends BaseMasterSuite {
+  val config = ConfigFactory.load()
   implicit val system = ActorSystem("FetcherSystem")
-
-  SystemSettings.config = Settings(system)
 
   def asyncHttpClient(fetchConfig: FetchConfig = FetchConfig()) = {
     new AsyncHttpClient(fetchConfig.httpClientConfig)
@@ -30,10 +30,10 @@ trait MasterSuite extends BaseMasterSuite {
   }
 
   def testQueue(queue: String = "sample_queue", currentlyProcessing: String = "sample_processing") = {
-    val queueConsumerObj = new QueueConsumer(SystemSettings.config.redisHost,
-      SystemSettings.config.redisPort,
-      SystemSettings.config.redisQueue,
-      SystemSettings.config.redisCurrentlyProcessingQueue)
+    val queueConsumerObj = new QueueConsumer(config.getString("redis.host"),
+    config.getInt("redis.port"),
+    config.getString("redis.fetcher_queue"),
+    config.getString("redis.fetcher_processing_list"))
     val actorRef = TestActorRef(queueConsumerObj)
     (actorRef, actorRef.underlyingActor)
   }
