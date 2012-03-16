@@ -5,10 +5,10 @@ import net.fyrie.redis._
 import akka.actor.ActorSystem
 import akka.util.ByteString
 
-abstract class BaseQueueConsumer[J](val queue: String, val redisHost: String, val redisPort: Int) extends Actor
+abstract class BaseQueueConsumer[J](val redisConfig: RedisConfig, val queue: String) extends Actor
   with akka.actor.ActorLogging {
-  val r = RedisClient(redisHost, redisPort)(context.system)
-
+  val r = RedisUtil.createRedisWithRedisConfig(redisConfig, context.system)
+  
   override def postStop {
     r.disconnect
   }

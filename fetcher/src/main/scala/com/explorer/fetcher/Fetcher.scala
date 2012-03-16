@@ -6,6 +6,7 @@ import com.ning.http.client.AsyncHttpClient
 import akka.routing.RoundRobinRouter
 import net.fyrie.redis._
 import akka.actor.ActorRef
+import com.explorer.common.{ RegisterTrafficMan, AckMessage, RedisUtil }
 import com.explorer.common.RegisterTrafficMan
 import com.explorer.common.AckMessage
 
@@ -16,11 +17,9 @@ class Fetcher(fetchConfig: FetchConfig) extends Actor
   val urlWorkers = Vector.fill(fetchConfig.numUrlWorkers)(context.actorOf(Props(new UrlWorker(httpClient, fetchConfig))))
   val router = context.actorOf(Props(new UrlWorker(httpClient, fetchConfig)).withRouter(RoundRobinRouter(urlWorkers)))
 
-  val redisHost = fetchConfig.akkaConfig.getString("redis.host")
-  val redisPort = fetchConfig.akkaConfig.getInt("redis.port")
   val redisProcessorQueue = fetchConfig.akkaConfig.getString("redis.processor_queue")
 
-  val r = RedisClient(redisHost, redisPort)(context.system)
+  val r = RedisUtil.createRedisWithRedisConfig(fetchConfig.redisConfig, context.system)
 
   var trafficMan: ActorRef = _
 
