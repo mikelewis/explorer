@@ -27,25 +27,6 @@ trait MasterSuite extends BaseMasterSuite {
     (actorRef, actorRef.underlyingActor)
   }
 
-  def testFetcher(fetchConfig: FetchConfig = defaultFetchConfig) = {
-    val actorRef = TestActorRef(new Fetcher(fetchConfig))
-    (actorRef, actorRef.underlyingActor)
-  }
-
-  def testQueue(queue: String = "sample_queue", currentlyProcessing: String = "sample_processing") = {
-
-    val queueConsumerObj = new QueueConsumer(redisConfig,
-      config.getString("redis.fetcher_queue"),
-      config.getString("redis.fetcher_processing_list"))
-    val actorRef = TestActorRef(queueConsumerObj)
-    (actorRef, actorRef.underlyingActor)
-  }
-
-  def testTrafficMan(fetcher: ActorRef = testFetcher()._1, queue: ActorRef = testQueue()._1) = {
-    val actorRef = TestActorRef(new FetcherTrafficMan(fetcher, queue))
-    (actorRef, actorRef.underlyingActor)
-  }
-
   def testActualUrlWorker(fetchConfig: FetchConfig = defaultFetchConfig) = {
     system.actorOf(Props(new UrlWorker(asyncHttpClient(fetchConfig), fetchConfig)))
   }

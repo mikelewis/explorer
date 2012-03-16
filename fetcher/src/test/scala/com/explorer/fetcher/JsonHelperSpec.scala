@@ -6,17 +6,8 @@ import org.scalatest.BeforeAndAfterEach
 
 @RunWith(classOf[JUnitRunner])
 class JsonHelperSpec extends MasterSuite with BeforeAndAfterEach {
-
-  var (trafficManActorRef, trafficManActor) = testTrafficMan()
-
-  override def beforeEach() {
-    var (trafficManActorRef, trafficManActor) = testTrafficMan()
-  }
-
   describe("prepareForFetchedUrlQueue") {
     it("should accept SucessfulFetch") {
-      // case class SuccessfulFetch(override val trafficMan: ActorRef, override val originalUrl: String, newUrl: String, status: Int, headers: Map[String, String], body: String)
-
       val success = SuccessfulFetch(originalUrl = "oldurl.com", newUrl = "newurl.com", status = 200, headers = Map("test" -> "test1", "test2" -> "test3"), body = "MY BODY")
       val json = JsonHelper.prepareForFetchedUrlQueue(success)
       json should be("""{"original_url":"oldurl.com","final_url":"newurl.com","status":200,"headers":{"test":"test1","test2":"test3"},"body":"MY BODY","message_type":"successful_fetch"}""")
