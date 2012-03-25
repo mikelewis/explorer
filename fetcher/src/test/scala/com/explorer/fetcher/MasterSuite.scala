@@ -1,8 +1,5 @@
 package com.explorer.fetcher
-import org.scalatest.FunSpec
 import com.typesafe.config.ConfigFactory
-import org.scalatest.matchers.ShouldMatchers
-import org.scalatest.OneInstancePerTest
 import akka.testkit.TestActorRef
 import akka.actor.Actor
 import akka.actor.ActorSystem
@@ -11,6 +8,7 @@ import akka.actor.ActorRef
 import com.explorer.common.BaseMasterSuite
 import akka.actor.Props
 import com.explorer.common.RedisConfig
+import com.explorer.common.HttpRequestor
 
 trait MasterSuite extends BaseMasterSuite {
   val config = ConfigFactory.load()
@@ -23,11 +21,16 @@ trait MasterSuite extends BaseMasterSuite {
   }
 
   def testUrlWorker(fetchConfig: FetchConfig = defaultFetchConfig) = {
-    val actorRef = TestActorRef(new UrlWorker(asyncHttpClient(fetchConfig), fetchConfig))
+    val httpClient = new AsyncHttpClient(fetchConfig.httpClientConfig)
+    val httpRequestor = new HttpRequestor(httpClient, fetchConfig.hooks)
+
+    val actorRef = TestActorRef(new UrlWorker(httpRequestor))
     (actorRef, actorRef.underlyingActor)
   }
 
   def testActualUrlWorker(fetchConfig: FetchConfig = defaultFetchConfig) = {
-    system.actorOf(Props(new UrlWorker(asyncHttpClient(fetchConfig), fetchConfig)))
+    val httpClient = new AsyncHttpClient(fetchConfig.httpClientConfig)
+    val httpRequestor = new HttpRequestor(httpClient, fetchConfig.hooks)
+    system.actorOf(Props(new UrlWorker(httpRequestor)))
   }
 }

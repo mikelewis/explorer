@@ -1,8 +1,8 @@
-package com.explorer.fetcher
+package com.explorer.common
 import com.ning.http.client.Response
 import com.ning.http.client.HttpResponseBodyPart
 
-class Hooks {
+class HttpHooks {
   def canVisitUrl(url: String): Boolean = {
     true
   }

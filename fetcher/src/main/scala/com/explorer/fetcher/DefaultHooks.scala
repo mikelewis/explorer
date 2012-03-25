@@ -1,5 +1,6 @@
 package com.explorer.fetcher
+import com.explorer.common.HttpHooks
 
-object DefaultHooks extends Hooks {
+object DefaultHooks extends HttpHooks {
 
 }

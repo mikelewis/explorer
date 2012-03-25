@@ -1,4 +1,13 @@
 package com.explorer.fetcher
+
+import com.explorer.common.HttpRequestor
+import com.explorer.common.HttpUtils
+
+import akka.actor.Actor
+import akka.actor.ActorRef
+import akka.dispatch.DefaultPromise
+import akka.pattern.pipeTo
+import collection.JavaConversions._
 import com.ning.http.client.AsyncHandler.STATE
 import com.ning.http.client.AsyncHandler
 import com.ning.http.client.AsyncHttpClient
@@ -9,21 +18,14 @@ import com.ning.http.client.Response
 import com.ning.http.client.AsyncHttpClientConfig
 import com.ning.http.client.AsyncHttpClientConfig.Builder
 import java.net.ConnectException
-import akka.actor.Actor
-import collection.JavaConversions._
-import akka.actor.ActorRef
-import akka.dispatch.DefaultPromise
-import akka.pattern.pipeTo
 
-class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
+class UrlWorker(httpRequestor: HttpRequestor) extends Actor
   with akka.actor.ActorLogging {
   implicit def dispatcher = context.dispatcher
 
-  val hooks = fetchConfig.hooks
-
   def receive = {
     case DownloadUrl(url) =>
-      processUrl(url).map { result =>
+      createHttpRequest(url).map { result =>
         result match {
           case response: Response => responseToCompletedFetch(url, response)
         }
@@ -32,10 +34,9 @@ class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
       }.pipeTo(sender)
   }
 
-  def processUrl(url: String, promise: DefaultPromise[Response] = (new DefaultPromise[Response])) = {
-    log.info("Fetching " + url)
-    client.prepareGet(url).execute(generateHttpHandler(promise))
-    promise
+  def createHttpRequest(url: String) = {
+    log.info("Creating http request for url: " + url)
+    httpRequestor.processUrl(url, new DefaultPromise[Response])
   }
 
   def processExceptionFromResponse: PartialFunction[Throwable, FailedReason] = {
@@ -50,56 +51,6 @@ class UrlWorker(client: AsyncHttpClient, fetchConfig: FetchConfig) extends Actor
       return FailedFetch(originalUrl, AbortedDocumentDuringStatus(response.getUri.toString))
     if (!response.hasResponseBody)
       return FailedFetch(originalUrl, AbortedDocumentDuringHeaders(response.getUri.toString))
-    SuccessfulFetch(originalUrl, response.getUri.toString, response.getStatusCode, getHeadersFromResponse(response), response.getResponseBody)
-  }
-
-  def generateHttpHandler(promise: DefaultPromise[Response]) = {
-    new AsyncHandler[Response]() {
-      val builder =
-        new Response.ResponseBuilder()
-
-      def onThrowable(t: Throwable) {
-        log.error(t.getMessage)
-        promise.failure(t)
-      }
-
-      def onBodyPartReceived(bodyPart: HttpResponseBodyPart) = {
-        val newBuilder = builder.accumulate(bodyPart)
-        if (hooks.canContinueFromBodyPartReceived(newBuilder.build, bodyPart))
-          STATE.CONTINUE
-        else
-          STATE.ABORT
-      }
-
-      def onStatusReceived(responseStatus: HttpResponseStatus) = {
-        val newBuilder = builder.accumulate(responseStatus)
-        if (hooks.canContinueFromStatusCode(newBuilder.build, responseStatus.getStatusCode()))
-          STATE.CONTINUE
-        else
-          STATE.ABORT
-      }
-
-      def onHeadersReceived(headers: HttpResponseHeaders) = {
-        val newBuilder = builder.accumulate(headers)
-        val resp = newBuilder.build
-        if (hooks.canContinueFromHeaders(resp, getHeadersFromResponse(resp)))
-          STATE.CONTINUE
-        else
-          STATE.ABORT
-      }
-
-      def onCompleted() = {
-        val response = builder.build()
-        promise.success(response)
-        response
-      }
-    }
-  }
-
-  def getHeadersFromResponse(response: Response): Map[String, String] = {
-    val headers = response.getHeaders()
-    headers.keySet.foldLeft(Map.empty[String, String]) { (acum, header) =>
-      acum + (header -> headers.getJoinedValue(header, ","))
-    }
+    SuccessfulFetch(originalUrl, response.getUri.toString, response.getStatusCode, HttpUtils.getHeadersFromResponse(response), response.getResponseBody)
   }
 }

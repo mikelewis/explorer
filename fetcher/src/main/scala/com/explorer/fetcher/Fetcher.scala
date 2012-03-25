@@ -9,13 +9,15 @@ import akka.actor.ActorRef
 import com.explorer.common.{ RegisterTrafficMan, AckMessage, RedisUtil }
 import com.explorer.common.RegisterTrafficMan
 import com.explorer.common.AckMessage
+import com.explorer.common.HttpRequestor
 
 class Fetcher(fetchConfig: FetchConfig) extends Actor
   with akka.actor.ActorLogging {
   val httpClient = new AsyncHttpClient(fetchConfig.httpClientConfig)
-
-  val urlWorkers = Vector.fill(fetchConfig.numUrlWorkers)(context.actorOf(Props(new UrlWorker(httpClient, fetchConfig))))
-  val router = context.actorOf(Props(new UrlWorker(httpClient, fetchConfig)).withRouter(RoundRobinRouter(urlWorkers)))
+  val httpRequestor = new HttpRequestor(httpClient, fetchConfig.hooks)
+  
+  val urlWorkers = Vector.fill(fetchConfig.numUrlWorkers)(context.actorOf(Props(new UrlWorker(httpRequestor))))
+  val router = context.actorOf(Props(new UrlWorker(httpRequestor)).withRouter(RoundRobinRouter(urlWorkers)))
 
   val redisProcessorQueue = fetchConfig.akkaConfig.getString("redis.processor_queue")
 

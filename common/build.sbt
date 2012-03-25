@@ -19,6 +19,7 @@ libraryDependencies += "com.typesafe.akka" % "akka-testkit" % "2.0-20120124-0006
 
 libraryDependencies ++= Seq(
     "net.fyrie" %% "fyrie-redis" % "2.0-SNAPSHOT",
+    "com.ning" % "async-http-client" % "1.6.4" % "compile",
     "org.slf4j" % "slf4j-nop" % "1.6.0" % "runtime",
     "junit" % "junit" % "4.7"
     )
