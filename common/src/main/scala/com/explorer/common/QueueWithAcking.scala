@@ -5,7 +5,7 @@ import net.fyrie.redis.RedisClient
 case class DoneProcessing(msg: String)
 
 trait QueueWithAcking[J] extends BaseQueueConsumer[J] {
-  val ackingClient = RedisUtil.createRedisWithRedisConfig(redisConfig, context.system)
+  val ackingClient = RedisUtils.createRedisWithRedisConfig(redisConfig, context.system)
 
   abstract override def postStop {
     super.postStop
