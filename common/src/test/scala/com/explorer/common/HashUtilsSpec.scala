@@ -20,11 +20,17 @@ class HashUtilsSpec extends MasterSuite with BeforeAndAfterEach {
     }
   }
 
-  describe("crc32 take takes string") {
+  describe("crc32 takes string") {
     it("should return correct crc32 hash") {
       val c = new CRC32
       c.update("hey".getBytes)
       HashUtils.crc32("hey") should be(c.getValue)
     }
+  }
+
+  describe("crc3 takes any traversable that responds to toByte") {
+    val c = new CRC32
+    c.update(List(1,2,3).map(_.toByte).toArray)
+    HashUtils.crc32(List(1, 2, 3)) should be(c.getValue)
   }
 }

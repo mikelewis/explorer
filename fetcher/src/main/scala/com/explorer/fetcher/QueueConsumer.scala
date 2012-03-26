@@ -13,7 +13,5 @@ class QueueConsumer(redisConfig: RedisConfig, queue: String, currentlyProcessing
 
   val currentlyProcessingQueue = currentlyProcessingQ
 
-  override def strToJob(msg: String) = {
-    FetchUrl(msg) // msg is url
-  }
+  override def strToJob(msg: String) = FetchUrl(msg) // msg is url
 }

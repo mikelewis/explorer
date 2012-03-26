@@ -11,7 +11,7 @@ trait Crc32 {
     c.getValue
   }
 
-  def crc32(obj: GetBytesType): Long = {
-    crc32(obj.getBytes())
-  }
+  def crc32(obj: GetBytesType): Long = crc32(obj.getBytes())
+
+  def crc32(xs: Traversable[Any { def toByte: Byte }]): Long = crc32(xs.map(_.toByte).toArray)
 }

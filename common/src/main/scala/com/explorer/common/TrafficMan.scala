@@ -3,9 +3,7 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 
 abstract class TrafficMan(other: ActorRef, queue: ActorRef) extends Actor {
-  def receive = {
-    baseDispatcher orElse trafficDispatcher
-  }
+  def receive = baseDispatcher orElse trafficDispatcher
 
   def baseDispatcher: PartialFunction[Any, Unit] = {
     case StartTrafficMan => startTrafficMan
