@@ -9,9 +9,9 @@ object ProcessRunner extends App {
   val config = ConfigFactory.load()
   val system = ActorSystem("ProcessorSystem")
 
-  val processor = system.actorOf(Props[Processor])
-
   val redisConfig = RedisConfig(host = config.getString("redis.host"), port = config.getInt("redis.port"), database = config.getInt("redis.database"))
+  val processorConfig = ProcessorConfig(redisConfig = redisConfig)
+  val processor = system.actorOf(Props(new Processor(processorConfig)))
 
   val queueConsumer = system.actorOf(Props(new QueueConsumer(redisConfig,
     config.getString("redis.processor_queue"),

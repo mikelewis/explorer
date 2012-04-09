@@ -17,5 +17,6 @@ case class ParseHtml(url: String, html: String) extends HtmlProcessorWorkType
 case class DoneParseHtml(document: Document, urls: List[String]) extends HtmlProcessorWorkType
 
 sealed trait UrlProcessWorkType extends WorkType
-case class ProcessUrls(urls: List[String]) extends UrlProcessWorkType
-case class DoneProcessUrls(urlsWithDelay: List[(String, Int)]) extends UrlProcessWorkType
+case class ProcessUrl(url: String) extends UrlProcessWorkType
+case class ProceedWithUrl(url: String, delay: Int) extends UrlProcessWorkType
+case class DoNotProceedWithUrl(url: String) extends UrlProcessWorkType
